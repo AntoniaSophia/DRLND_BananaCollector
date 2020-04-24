@@ -8,8 +8,11 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
+
+from PrioritizedMemory import PrioritizedReplayMemory
+
 BUFFER_SIZE = int(1e5)
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 GAMMA = 0.99 # discount rate
 TAU = 1e-3 # soft updating of target params
@@ -30,7 +33,7 @@ class Agent():
     
     """
     
-    def __init__(self, state_size, action_size, seed):
+    def __init__(self, state_size, action_size, seed, prioritized_memory):
         
         # keep params
         self.state_size = state_size
@@ -45,7 +48,13 @@ class Agent():
         self.optimizer = optim.Adam(self.qnn_local.parameters(), lr=LR)
         
         # Replay Memory
-        self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, seed)
+        if prioritized_memory == True:
+            print("Using PrioritizedReplayMemory...")
+            self.memory = PrioritizedReplayMemory(BUFFER_SIZE)
+        else:
+            print("Using simple ReplayBuffer...")
+            self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, seed)
+
         self.t_step = 0
         
     def act(self, state, eps=0.):
@@ -83,7 +92,7 @@ class Agent():
             
             # learn if we have enough experience samples in memory
             if len(self.memory) > BATCH_SIZE:
-                experiences = self.memory.sample()
+                experiences = self.memory.sample(BATCH_SIZE)
                 self.learn(experiences, GAMMA)
     
     def learn(self, experiences, gamma):
@@ -95,6 +104,12 @@ class Agent():
         
         # unpack experiences into workable arrays
         states, actions, rewards, next_states, dones = experiences
+
+        #print("States = ", states.shape , " type = " , type(states))
+        #print("actions = ", actions.shape , " type = " , type(actions))
+        #print("rewards = ", rewards.shape , " type = " , type(rewards))
+        #print("next_states = ", next_states.shape , " type = " , type(next_states))
+        #print("dones = ", dones.shape , " type = " , type(dones))
         
         # get best predicted Q-values for next_states from targe model [What does the target model tell us (delayed trained model)]
         Q_targets_next = self.qnn_target(next_states).detach().max(1)[0].unsqueeze(1)
@@ -151,9 +166,9 @@ class ReplayBuffer:
         e = self.experience(state, action, reward, next_state, done)
         self.memory.append(e)
     
-    def sample(self):
+    def sample(self , batch_size):
         """Randomly sample a batch of experiences from memory."""
-        experiences = random.sample(self.memory, k=self.batch_size)
+        experiences = random.sample(self.memory, batch_size)
 
         states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
         actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(device)

@@ -1,19 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Navigation
-# 
-# ---
-# 
-# In this notebook, you will learn how to use the Unity ML-Agents environment for the first project of the [Deep Reinforcement Learning Nanodegree](https://www.udacity.com/course/deep-reinforcement-learning-nanodegree--nd893).
-# 
-# ### 1. Start the Environment
-# 
-# We begin by importing some necessary packages.  If the code cell below returns an error, please revisit the project instructions to double-check that you have installed [Unity ML-Agents](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Installation.md) and [NumPy](http://www.numpy.org/).
-
-# In[1]:
-
-
 from unityagents import UnityEnvironment
 from dqn_agent import Agent
 from collections import deque
@@ -22,90 +6,50 @@ import matplotlib.pyplot as plt
 import torch
 
 
-# Next, we will start the environment!  **_Before running the code cell below_**, change the `file_name` parameter to match the location of the Unity environment that you downloaded.
+#
+# Train an agent and return the reached maximum reward
 # 
-# - **Mac**: `"path/to/Banana.app"`
-# - **Windows** (x86): `"path/to/Banana_Windows_x86/Banana.exe"`
-# - **Windows** (x86_64): `"path/to/Banana_Windows_x86_64/Banana.exe"`
-# - **Linux** (x86): `"path/to/Banana_Linux/Banana.x86"`
-# - **Linux** (x86_64): `"path/to/Banana_Linux/Banana.x86_64"`
-# - **Linux** (x86, headless): `"path/to/Banana_Linux_NoVis/Banana.x86"`
-# - **Linux** (x86_64, headless): `"path/to/Banana_Linux_NoVis/Banana.x86_64"`
-# 
-# For instance, if you are using a Mac, then you downloaded `Banana.app`.  If this file is in the same folder as the notebook, then the line below should appear as follows:
-# ```
-# env = UnityEnvironment(file_name="Banana.app")
-# ```
+def train_banana_collector(env, brain_name, maxEpisodes, threshold, \
+                           eps_start, eps_end, eps_decay, seed, filename, prioritized_memory):
 
-# In[3]:
+    # reset the environment
+    env_info = env.reset(train_mode=True)[brain_name]
+    brain = env.brains[brain_name]
 
+    # number of agents in the environment
+    print('Number of agents:', len(env_info.agents))
 
-env = UnityEnvironment(file_name="../Unity_BananaCollector/Banana.exe")
+    # number of actions
+    action_size = brain.vector_action_space_size
+    print('Number of actions:', action_size)
 
+    # examine the state space 
+    state = env_info.vector_observations[0]
+    print('States look like:', state)
+    state_size = len(state)
+    print('States have length:', state_size)
 
-# Environments contain **_brains_** which are responsible for deciding the actions of their associated agents. Here we check for the first brain available, and set it as the default brain we will be controlling from Python.
-
-
-# get the default brain
-brain_name = env.brain_names[0]
-brain = env.brains[brain_name]
-
-
-# ### 2. Examine the State and Action Spaces
-# 
-# The simulation contains a single agent that navigates a large environment.  At each time step, it has four actions at its disposal:
-# - `0` - walk forward 
-# - `1` - walk backward
-# - `2` - turn left
-# - `3` - turn right
-# 
-# The state space has `37` dimensions and contains the agent's velocity, along with ray-based perception of objects around agent's forward direction.  A reward of `+1` is provided for collecting a yellow banana, and a reward of `-1` is provided for collecting a blue banana. 
-# 
-# Run the code cell below to print some information about the environment.
-
-# In[5]:
-
-
-# reset the environment
-env_info = env.reset(train_mode=True)[brain_name]
-
-# number of agents in the environment
-print('Number of agents:', len(env_info.agents))
-
-# number of actions
-action_size = brain.vector_action_space_size
-print('Number of actions:', action_size)
-
-# examine the state space 
-state = env_info.vector_observations[0]
-print('States look like:', state)
-state_size = len(state)
-print('States have length:', state_size)
-
-
-
-
-def train_banana_collector():
-
-    agent = Agent(state_size=state_size, action_size=action_size, seed=999)
+    env_info = env.reset(train_mode=True)[brain_name]
+    agent = Agent(state_size=state_size, action_size=action_size, seed=seed , prioritized_memory=prioritized_memory)
     
-    env_info = env.reset(train_mode=True)[brain_name] # reset the environment
     state = env_info.vector_observations[0]            # get the current state
-    score = 0                                          # initialize the score
 
-    eps_start=1.0
-    eps_end=0.01
-    eps_decay=0.999
-    eps = eps_start                    # initialize epsilon
 
-    n_episodes=10000
-
+    # initialize the score
+    score = 0                                          
     scores = []                        # list containing scores from each episode
     scores_window = deque(maxlen=100)  # last 100 scores
 
-    for i_episode in range(1, n_episodes+1):
+
+    # initialize epsilon
+    eps = eps_start                    
+
+    # now execute up to maximum r"maxEpisodes" episodes
+    for i_episode in range(1, maxEpisodes):
         score = 0
-        env_info = env.reset(train_mode=True)[brain_name] # reset the environment
+
+        # 1.Step: reset the environment - set the train_mode to True !!
+        env_info = env.reset(train_mode=True)[brain_name] 
         state = env_info.vector_observations[0]            # get the current state
 
         while True:
@@ -132,14 +76,14 @@ def train_banana_collector():
         print('\rEpisode {}\tAverage Score: {:.2f} , epsilon: {}'.format(i_episode, np.mean(scores_window),eps), end="")
         if i_episode % 100 == 0:
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
-        if np.mean(scores_window)>=15 and len(scores_window)==100:
+        if np.mean(scores_window)>=threshold and len(scores_window)==100:
             print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
-            torch.save(agent.qnn_local.state_dict(), 'checkpoint.pth')
+            torch.save(agent.qnn_local.state_dict(), filename)
             break
    
     return scores
 
-
+# plot the scores of all episodes
 def plot_scores(scores):
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -150,27 +94,48 @@ def plot_scores(scores):
 
 
 
-
-
-def test_banana_collector(agent,runs):
-
+#
+# Run a number of episodes with a given agent and calculate the average reward
+# 
+def test_banana_collector(env, brain_name, agent, runs):
+    # set overall sum of scores to 0
     scores = []
 
+    # now execute up to maximum runs episodes
     for i in range(runs):
-        env_info = env.reset(train_mode=False)[brain_name] # reset the environment
-        state = env_info.vector_observations[0]            # get the current state
+
+        # 1.Step: reset the environment - set the train_mode to False !!
+        env_info = env.reset(train_mode=False)[brain_name] 
+
+        # 2. Step: get the current state 
+        state = env_info.vector_observations[0]           
         
+        # 3.Step: set the score of the current episode to 0
         score = 0 
 
-
+        # 4.Step: while episode has not ended (done = True) repeat
         try:
-            while (1):
-                action = agent.act(state,0)   
+            while (1):#
+                # 5.Step: Calculate the next action from agent with epsilon 0 
+                #         epsilon = 0 because we are not in training mode !
+                action = agent.act(state,0)                 
+
+                # 6.Step: Tell the environment about this action and get result
                 env_info = env.step(action)[brain_name] 
+
+                # 7.Step: now let's get the state observation from observation
                 state = env_info.vector_observations[0] 
+
+                # 8.Step: now let's get the reward observation from observation
                 reward = env_info.rewards[0]
-                done = env_info.local_done[0]  
+
+                # 9.Step: now let's get the done observation from observation
+                done = env_info.local_done[0]
+
+                # 10.Step: Add the reward of the last action-state result  
                 score += reward
+
+                # 11.Step: in case of end of episode print the result and break loop 
                 if done:
                     print("Score in episodes {}: {}".format(i, score))
                     break
@@ -178,25 +143,86 @@ def test_banana_collector(agent,runs):
             print("exception:",e)
             continue
     
+        # 12.Step: Finally append the score of last epsisode to the overall scores
         scores.append(score)
 
     return scores
 
-def load_banana_collector(filename):
-    agent = Agent(state_size=state_size, action_size=action_size, seed=630)
+#
+# Reload a trained DQN from file 'filename'
+# 
+def load_banana_collector(env, brain_name , filename):
+
+    # reset the environment
+    env_info = env.reset(train_mode=True)[brain_name]
+    brain = env.brains[brain_name]
+
+    action_size = brain.vector_action_space_size
+    state = env_info.vector_observations[0]
+    state_size = len(state)
+
+    agent = Agent(state_size=state_size, action_size=action_size, seed=630, prioritized_memory=False)
     agent.qnn_local.load_state_dict(torch.load(filename))
     return agent
 
 
 
-#train_banana_collector()
+# ### 2. Examine the State and Action Spaces
+# 
+# The simulation contains a single agent that navigates a large environment.  
+# At each time step, it has four actions at its disposal:
+# - `0` - walk forward 
+# - `1` - walk backward
+# - `2` - turn left
+# - `3` - turn right
+# 
+# The state space has `37` dimensions and contains the agent's velocity, 
+# along with ray-based perception of objects around agent's forward direction.  
+# A reward of `+1` is provided for collecting a yellow banana, and a reward 
+# of `-1` is provided for collecting a blue banana. 
+env = UnityEnvironment(file_name="../Unity_BananaCollector/Banana.exe")
 
-agent = load_banana_collector('checkpoint.pth')
-n_episode_run = 10
-scores = test_banana_collector(agent , n_episode_run)
+# Environments contain **_brains_** which are responsible for deciding 
+# the actions of their associated agents. Here we check for the first brain 
+# available, and set it as the default brain we will be controlling from Python.
+
+# get the default brain
+brain_name = env.brain_names[0]
+
+
+# Set the minimum score the agent has to reach in order to solve this task
+threshold = 16.0
+
+# Set the maximum number of episodes which the agent 
+maxEpisodes = 3000
+
+# Set this variable to "True" in case you want to retrain your agent
+train = False
+
+# Set the hyperparameters for training
+eps_start=1.0
+eps_end=0.02
+eps_decay=0.995
+seed = 999
+
+# Set the filename for storage of the trained model
+filename = "checkpoint.pth"
+
+# Set the following parameter to True in case you would like to use the prioritized memory
+prioritized_memory = True
+
+if train:
+    train_banana_collector(env, brain_name, maxEpisodes, threshold, \
+                           eps_start, eps_end, eps_decay, seed, filename, prioritized_memory)
+
+
+# Finally test the agent 
+
+agent = load_banana_collector(env, brain_name, filename) # First load the trained agent
+n_episode_run = 10                      # Execute 10 runs
+scores = test_banana_collector(env, brain_name, agent , n_episode_run)  # run!
 print("Mean score over {} episodes: {}".format(n_episode_run, np.mean(scores)))
 
 
 # When finished, you can close the environment.
-
 env.close()
