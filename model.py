@@ -10,7 +10,7 @@ class QNetwork(nn.Module):
         
             state_size: input dimension (we're inputting states into the NN, so we're calling it state_size)
             action_size: action dimension (output dimension - output layer of the NN)
-            seed: Random seed, to keep reproducability across experiment
+            seed: Random seed - set this a constant value in order to keep reproducability across experiment
             fc1_units: Number of nodes in first hidden layer
             fc2_units: Number of nodes in second hidden layer
         """

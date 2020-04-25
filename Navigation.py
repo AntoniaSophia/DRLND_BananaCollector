@@ -10,7 +10,7 @@ import torch
 # Train an agent and return the reached maximum reward
 # 
 def train_banana_collector(env, brain_name, maxEpisodes, threshold, \
-                           eps_start, eps_end, eps_decay, seed, filename, prioritized_memory):
+                           eps_start, eps_end, eps_decay, seed, filename, memory_type):
 
     # reset the environment
     env_info = env.reset(train_mode=True)[brain_name]
@@ -30,7 +30,7 @@ def train_banana_collector(env, brain_name, maxEpisodes, threshold, \
     print('States have length:', state_size)
 
     env_info = env.reset(train_mode=True)[brain_name]
-    agent = Agent(state_size=state_size, action_size=action_size, seed=seed , prioritized_memory=prioritized_memory)
+    agent = Agent(state_size=state_size, action_size=action_size, seed=seed , memory_type=memory_type)
     
     state = env_info.vector_observations[0]            # get the current state
 
@@ -236,11 +236,11 @@ seed = 999
 filename = "checkpoint.pth"
 
 # Set the following parameter to True in case you would like to use the prioritized memory
-prioritized_memory = True
+memory_type = 0
 
 if train:
     train_banana_collector(env, brain_name, maxEpisodes, threshold, \
-                           eps_start, eps_end, eps_decay, seed, filename, prioritized_memory)
+                           eps_start, eps_end, eps_decay, seed, filename, memory_type)
 
 
 # Finally test the agent 

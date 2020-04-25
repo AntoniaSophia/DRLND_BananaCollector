@@ -39,26 +39,7 @@ The task is episodic, and in order to solve the environment, your agent must get
 Follow the instructions in `Navigation.ipynb` to get started with training your own agent!  
 
 
-3. Description of my solution
-
-In this chapter I describe my solution to this project. My solutions consists of the following files:
-   - `Navigation.ipynb` - this is the Jupyter notebook
-   - `dqn_agent.py` - this is a vanilla DQN agent and contains the following parameters
-     - state_size           
-     - action_size
-     - seed
-     - prioritized_memory
-   - 
-
-
-## Discussion
-
-Setting BATCH_SIZE = 32 worked best
-toggling
-
-
-
-1. (Optional) Challenge: Learning from Pixels
+### (Optional) Challenge: Learning from Pixels
 
 After you have successfully completed the project, if you're looking for an additional challenge, you have come to the right place!  In the project, your agent learned from information such as its velocity, along with ray-based perception of objects around its forward direction.  A more challenging task would be to learn directly from pixels!
 
