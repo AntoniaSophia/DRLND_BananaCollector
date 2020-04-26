@@ -183,11 +183,13 @@ In the next section I'm going to explain all the parameters I have chosen.
 
 Finally I was able to solve this task for the threshold = 15.0
   - within 609 episodes for FifoMemory 
+  - the trained model can be found at: https://github.com/AntoniaSophia/DRLND_BananaCollector/blob/master/checkpoints/fifo_memory.pth
   
 ![](docs/Fifo_Result.png) 
 
 
   - within 674 episodes for DequeMemory
+  - the trained model can be found at: https://github.com/AntoniaSophia/DRLND_BananaCollector/blob/master/checkpoints/deque_memory.pth
 
 ![](docs/Deque_Result.png) 
 
